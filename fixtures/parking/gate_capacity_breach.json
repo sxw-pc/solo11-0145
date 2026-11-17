@@ -1,0 +1,6 @@
+[
+  {"event_id":"breach-baseline","op":"baseline","count":0,"event_time":"2026-11-17T09:00:00Z"},
+  {"event_id":"breach-in-1","stay_id":"breach-s1","direction":"in","event_time":"2026-11-17T09:50:00Z"},
+  {"event_id":"breach-in-2","stay_id":"breach-s3","direction":"in","event_time":"2026-11-17T09:50:00Z"},
+  {"event_id":"breach-orphan","stay_id":"breach-s2","direction":"out","event_time":"2026-11-17T10:05:00Z"}
+]

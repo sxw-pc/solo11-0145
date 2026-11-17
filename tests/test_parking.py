@@ -120,6 +120,16 @@ class ParkingCases(unittest.TestCase):
                              {'event_id':'out-old','stay_id':'s-old','direction':'out','event_time':'2026-11-17T09:30:00Z'}])
         self.assertEqual(gate.snapshot(self.db,'2026-11-17T10:00:00Z')['active'],1)
 
+    def test_orphan_exit_plus_capacity_reservation_creates_distinct_incident(self):
+        gate.ingest(self.db,fixture('gate_capacity_breach.json'))
+        before=report.decide(self.db,'2026-11-17T10:10:00Z',3)
+        self.assertEqual((before['state'],before['gate']['active']),('unknown',2))
+        capacity.ingest(self.db,fixture('capacity_breach.json'))
+        after=report.decide(self.db,'2026-11-17T10:10:00Z',3)
+        self.assertEqual((after['state'],after['capacity_breach'],after['available']),('capacity_breach',True,None))
+        incident=self.db.execute('SELECT active_lower_bound,operable_capacity,decision FROM capacity_incident ORDER BY incident_id DESC LIMIT 1').fetchone()
+        self.assertEqual(tuple(incident),(2,1,'operator_investigation'))
+
     def test_untrusted_sensor_does_not_count_free(self):
         self.good()
         e={'event_id':'read-bad','op':'reading','device_id':'missing','bay_id':'b2','occupied':False,'sequence_no':9,'event_time':'2026-11-17T10:05:00Z'}

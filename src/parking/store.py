@@ -70,6 +70,12 @@ CREATE TABLE IF NOT EXISTS availability_release (
   available INTEGER, state TEXT NOT NULL, evidence TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS capacity_incident (
+  incident_id INTEGER PRIMARY KEY AUTOINCREMENT,as_of TEXT NOT NULL,
+  active_lower_bound INTEGER NOT NULL,operable_capacity INTEGER NOT NULL,
+  decision TEXT NOT NULL,reason TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 

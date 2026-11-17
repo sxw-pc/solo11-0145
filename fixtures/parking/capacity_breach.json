@@ -1,0 +1,3 @@
+[
+  {"event_id":"breach-capacity","order_id":"breach-order","purpose":"construction","priority":10,"approved":true,"revoked":false,"bays":["b2","b3"],"starts_at":"2026-11-17T09:00:00Z","ends_at":"2026-11-17T11:00:00Z","event_time":"2026-11-17T09:00:00Z"}
+]
