@@ -1,6 +1,7 @@
 """Time-windowed capacity orders and set-union bay deductions."""
 from __future__ import annotations
 
+import json
 from .sources import record
 from .store import rows
 
@@ -15,13 +16,15 @@ def ingest(db,events: list[dict]) -> dict:
             if e['starts_at']>=e['ends_at']:raise ValueError('empty capacity window')
             if not isinstance(e['bays'],list) or not e['bays']:raise ValueError('capacity order needs bays')
             if record(db,e,'capacity_order',e['order_id']):
+                status='approved' if e.get('approved',False) and not e.get('revoked',False) else 'revoked' if e.get('revoked',False) else 'pending'
+                db.execute('INSERT INTO capacity_revision VALUES (?,?,?,?,?,?,?,?,?)',
+                           (e['event_id'],e['order_id'],e['purpose'],int(e['priority']),status,json.dumps(sorted(set(e['bays']))),e['starts_at'],e['ends_at'],e['event_time']))
                 old=db.execute('SELECT source_event FROM capacity_order WHERE order_id=?',(e['order_id'],)).fetchone()
                 if old:
                     prior=db.execute('SELECT event_time FROM evidence WHERE event_id=?',(old['source_event'],)).fetchone()
                     if prior['event_time']>e['event_time']:
                         made+=1;continue
                     db.execute('DELETE FROM capacity_window WHERE order_id=?',(e['order_id'],))
-                status='approved' if e.get('approved',False) and not e.get('revoked',False) else 'revoked' if e.get('revoked',False) else 'pending'
                 db.execute('INSERT INTO capacity_order(order_id,purpose,priority,status,source_event) VALUES (?,?,?,?,?) ON CONFLICT(order_id) DO UPDATE SET purpose=excluded.purpose,priority=excluded.priority,status=excluded.status,source_event=excluded.source_event',
                            (e['order_id'],e['purpose'],int(e['priority']),status,e['event_id']))
                 for bay in sorted(set(e['bays'])):
@@ -33,7 +36,14 @@ def ingest(db,events: list[dict]) -> dict:
 
 
 def snapshot(db,as_of: str) -> dict:
-    active=rows(db,"SELECT c.order_id,c.purpose,c.priority,w.bay_id FROM capacity_order c JOIN capacity_window w USING(order_id) WHERE c.status='approved' AND w.starts_at<=? AND w.ends_at>? ORDER BY c.priority DESC,c.order_id",(as_of,as_of))
+    revisions=rows(db,'SELECT * FROM capacity_revision WHERE event_time<=? ORDER BY event_time DESC,event_id DESC',(as_of,))
+    latest={}
+    for r in revisions:latest.setdefault(r['order_id'],r)
+    active=[]
+    for r in latest.values():
+        if r['status']=='approved' and r['starts_at']<=as_of<r['ends_at']:
+            active.extend({'order_id':r['order_id'],'purpose':r['purpose'],'priority':r['priority'],'bay_id':bay} for bay in json.loads(r['bays_json']))
+    active.sort(key=lambda r:(-r['priority'],r['order_id']))
     bays=sorted({r['bay_id'] for r in active})
     # The highest priority order owns the operational response for a shared bay;
     # the bay is still deducted only once from public capacity.

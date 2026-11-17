@@ -15,6 +15,8 @@ def ingest(db, events: list[dict]) -> dict:
                 raise ValueError(f'unknown sensor op {op}')
             if op == 'device':
                 if record(db,e,'sensor_device',e['device_id']):
+                    db.execute('INSERT INTO sensor_revision VALUES (?,?,?,?,?)',
+                               (e['event_id'],e['device_id'],e['bay_id'],e['calibrated_until'],e['event_time']))
                     old=db.execute('SELECT valid_from FROM sensor_registry WHERE device_id=?',(e['device_id'],)).fetchone()
                     if old is None or e['event_time'] >= old['valid_from']:
                         db.execute('INSERT INTO sensor_registry(device_id,bay_id,calibrated_until,valid_from,source_event) VALUES (?,?,?,?,?) ON CONFLICT(device_id) DO UPDATE SET bay_id=excluded.bay_id,calibrated_until=excluded.calibrated_until,valid_from=excluded.valid_from,source_event=excluded.source_event',
@@ -33,11 +35,13 @@ def ingest(db, events: list[dict]) -> dict:
 
 
 def bay_state(db,bay_id: str,as_of: str,timeout_minutes: int=30) -> dict:
-    candidates=rows(db,'SELECT o.*,r.bay_id AS registered_bay,r.calibrated_until,r.valid_from FROM occupancy_event o LEFT JOIN sensor_registry r ON r.device_id=o.device_id WHERE o.bay_id=? AND o.observed_at<=? ORDER BY o.observed_at DESC,o.sequence_no DESC,o.event_id DESC',(bay_id,as_of))
+    candidates=rows(db,'SELECT * FROM occupancy_event WHERE bay_id=? AND observed_at<=? ORDER BY observed_at DESC,sequence_no DESC,event_id DESC',(bay_id,as_of))
     if not candidates:
         return {'state':'unknown','event_id':None,'observed_at':None,'reason':'no_reading'}
     e=candidates[0]
-    if e['registered_bay']!=bay_id or e['observed_at']>e['calibrated_until'] or e['observed_at']<e['valid_from']:
+    revision=db.execute('SELECT * FROM sensor_revision WHERE device_id=? AND valid_from<=? ORDER BY valid_from DESC,event_id DESC LIMIT 1',
+                        (e['device_id'],e['observed_at'])).fetchone()
+    if revision is None or revision['bay_id']!=bay_id or e['observed_at']>revision['calibrated_until']:
         return {'state':'unknown','event_id':e['event_id'],'observed_at':e['observed_at'],'reason':'untrusted_device'}
     elapsed=(datetime.fromisoformat(as_of.replace('Z','+00:00'))-datetime.fromisoformat(e['observed_at'].replace('Z','+00:00'))).total_seconds()/60
     if elapsed>timeout_minutes:

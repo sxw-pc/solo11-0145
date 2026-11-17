@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS sensor_registry (
   device_id TEXT PRIMARY KEY, bay_id TEXT NOT NULL, calibrated_until TEXT NOT NULL,
   valid_from TEXT NOT NULL, source_event TEXT NOT NULL REFERENCES evidence(event_id)
 );
+CREATE TABLE IF NOT EXISTS sensor_revision (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), device_id TEXT NOT NULL,
+  bay_id TEXT NOT NULL, calibrated_until TEXT NOT NULL, valid_from TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS occupancy_event (
   event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), device_id TEXT NOT NULL,
   bay_id TEXT NOT NULL, observed_at TEXT NOT NULL, sequence_no INTEGER NOT NULL,
@@ -50,6 +54,12 @@ CREATE TABLE IF NOT EXISTS capacity_window (
 CREATE TABLE IF NOT EXISTS capacity_decision (
   order_id TEXT PRIMARY KEY REFERENCES capacity_order(order_id),
   decision TEXT NOT NULL, reason TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS capacity_revision (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), order_id TEXT NOT NULL,
+  purpose TEXT NOT NULL, priority INTEGER NOT NULL, status TEXT NOT NULL,
+  bays_json TEXT NOT NULL, starts_at TEXT NOT NULL, ends_at TEXT NOT NULL,
+  event_time TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS availability_release (
   release_id INTEGER PRIMARY KEY AUTOINCREMENT, as_of TEXT NOT NULL,

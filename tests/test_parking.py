@@ -72,6 +72,8 @@ class ParkingCases(unittest.TestCase):
         capacity.ingest(self.db,[revoke])
         r=report.decide(self.db,'2026-11-17T10:10:00Z',3)
         self.assertEqual((r['capacity']['reserved_count'],r['available']),(0,2))
+        earlier=report.decide(self.db,'2026-11-17T10:00:00Z',3)
+        self.assertEqual(earlier['capacity']['reserved_count'],1)
 
     def test_revoke_does_not_clear_gate_discrepancy(self):
         self.good()
