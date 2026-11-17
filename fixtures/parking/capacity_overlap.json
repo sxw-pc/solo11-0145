@@ -1,0 +1,3 @@
+[
+  {"event_id":"capacity-2","order_id":"o2","purpose":"fire","priority":20,"approved":true,"revoked":false,"bays":["b3"],"starts_at":"2026-11-17T09:30:00Z","ends_at":"2026-11-17T10:30:00Z","event_time":"2026-11-17T09:30:00Z"}
+]

@@ -1,0 +1,3 @@
+[
+  {"event_id":"read-old","op":"reading","device_id":"d1","bay_id":"b1","occupied":false,"sequence_no":0,"event_time":"2026-11-17T09:30:00Z"}
+]

@@ -1,0 +1,72 @@
+"""SQLite schema and transactional evidence access."""
+from __future__ import annotations
+
+import sqlite3
+from pathlib import Path
+
+SCHEMA = """
+PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS evidence (
+  event_id TEXT PRIMARY KEY, kind TEXT NOT NULL, object_id TEXT NOT NULL,
+  event_time TEXT NOT NULL, captured_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sha256 TEXT NOT NULL, body TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sensor_registry (
+  device_id TEXT PRIMARY KEY, bay_id TEXT NOT NULL, calibrated_until TEXT NOT NULL,
+  valid_from TEXT NOT NULL, source_event TEXT NOT NULL REFERENCES evidence(event_id)
+);
+CREATE TABLE IF NOT EXISTS occupancy_event (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), device_id TEXT NOT NULL,
+  bay_id TEXT NOT NULL, observed_at TEXT NOT NULL, sequence_no INTEGER NOT NULL,
+  occupied INTEGER NOT NULL CHECK(occupied IN (0,1))
+);
+CREATE TABLE IF NOT EXISTS bay_projection (
+  bay_id TEXT PRIMARY KEY, state TEXT NOT NULL, selected_event TEXT,
+  observed_at TEXT, reason TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS gate_event (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), stay_id TEXT NOT NULL,
+  direction TEXT NOT NULL CHECK(direction IN ('in','out')),
+  occurred_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS vehicle_stay (
+  stay_id TEXT PRIMARY KEY, entered_at TEXT, exited_at TEXT, state TEXT NOT NULL,
+  reason TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS gate_balance (
+  id INTEGER PRIMARY KEY CHECK(id=1), active_count INTEGER NOT NULL,
+  orphan_count INTEGER NOT NULL, duplicate_count INTEGER NOT NULL,
+  computed_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS capacity_order (
+  order_id TEXT PRIMARY KEY, purpose TEXT NOT NULL, priority INTEGER NOT NULL,
+  status TEXT NOT NULL, source_event TEXT NOT NULL REFERENCES evidence(event_id)
+);
+CREATE TABLE IF NOT EXISTS capacity_window (
+  order_id TEXT NOT NULL REFERENCES capacity_order(order_id), bay_id TEXT NOT NULL,
+  starts_at TEXT NOT NULL, ends_at TEXT NOT NULL,
+  PRIMARY KEY(order_id,bay_id,starts_at)
+);
+CREATE TABLE IF NOT EXISTS capacity_decision (
+  order_id TEXT PRIMARY KEY REFERENCES capacity_order(order_id),
+  decision TEXT NOT NULL, reason TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS availability_release (
+  release_id INTEGER PRIMARY KEY AUTOINCREMENT, as_of TEXT NOT NULL,
+  available INTEGER, state TEXT NOT NULL, evidence TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+
+def connect(path: str | Path) -> sqlite3.Connection:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    db = sqlite3.connect(path)
+    db.row_factory = sqlite3.Row
+    db.executescript(SCHEMA)
+    return db
+
+
+def rows(db: sqlite3.Connection, sql: str, args=()):
+    return [dict(row) for row in db.execute(sql, args).fetchall()]
