@@ -11,14 +11,21 @@ def decide(db,as_of: str,total_bays: int,timeout_minutes: int=30,save: bool=True
     s=sensor.snapshot(db,as_of,timeout_minutes)
     g=gate.snapshot(db,as_of)
     c=capacity.snapshot(db,as_of)
+    uncovered=max(0,total_bays-len(s['states']))
+    s['uncovered']=uncovered
+    s['unknown']+=uncovered
     usable=max(0,total_bays-c['reserved_count'])
     discrepancy=None
     if s['unknown']==0 and s['states']:
         discrepancy=s['occupied']-g['active']
     if s['unknown'] and not g['complete']:
         state='unknown';available=None;reason='sensor_and_gate_incomplete'
+    elif not s['states'] and not g['complete']:
+        state='unknown';available=None;reason='no_occupancy_evidence'
     elif g['orphan']:
         state='frozen';available=None;reason='orphan_exit'
+    elif g['duplicate']:
+        state='frozen';available=None;reason='duplicate_gate_receipt'
     elif s['unknown']:
         state='conservative';available=max(0,usable-g['active']);reason='gate_only_bound'
     elif discrepancy is not None and discrepancy!=0:

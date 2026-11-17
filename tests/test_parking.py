@@ -79,7 +79,7 @@ class ParkingCases(unittest.TestCase):
         self.good()
         revoke=dict(fixture('capacity_good.json')[0],event_id='capacity-revoke',event_time='2026-11-17T10:05:00Z',revoked=True)
         capacity.ingest(self.db,[revoke])
-        extra=dict(fixture('gate_good.json')[0],event_id='gate-in-3',stay_id='s3')
+        extra=dict(fixture('gate_good.json')[1],event_id='gate-in-3',stay_id='s3')
         gate.ingest(self.db,[extra])
         r=report.decide(self.db,'2026-11-17T10:10:00Z',3)
         self.assertEqual((r['state'],r['reason']),('frozen','sensor_gate_discrepancy'))
@@ -99,6 +99,26 @@ class ParkingCases(unittest.TestCase):
                              {'event_id':'b','stay_id':'night','direction':'out','event_time':'2026-11-17T00:15:00Z'}])
         r=gate.snapshot(self.db,'2026-11-17T10:10:00Z')
         self.assertEqual((r['active'],r['billable'][0]['to']),(0,'2026-11-17T00:15:00Z'))
+        persisted=self.db.execute("SELECT entered_at,exited_at,state FROM vehicle_stay WHERE stay_id='night'").fetchone()
+        self.assertEqual((persisted['entered_at'],persisted['exited_at'],persisted['state']),
+                         ('2026-11-16T23:55:00Z','2026-11-17T00:15:00Z','closed'))
+
+    def test_uncovered_bays_without_gate_baseline_are_unknown(self):
+        sensor.ingest(self.db,[fixture('sensor_good.json')[1],fixture('sensor_good.json')[4]])
+        r=report.decide(self.db,'2026-11-17T10:10:00Z',100)
+        self.assertEqual((r['state'],r['available'],r['sensor']['uncovered']),('unknown',None,99))
+
+    def test_certified_gate_baseline_can_cover_uninstrumented_bays(self):
+        sensor.ingest(self.db,[fixture('sensor_good.json')[1],fixture('sensor_good.json')[4]])
+        gate.ingest(self.db,[fixture('gate_good.json')[0]])
+        r=report.decide(self.db,'2026-11-17T10:10:00Z',100)
+        self.assertEqual((r['state'],r['available']),('conservative',100))
+
+    def test_nonzero_baseline_and_exit_reduce_occupancy(self):
+        gate.ingest(self.db,[{'event_id':'base','op':'baseline','count':2,'event_time':'2026-11-17T09:00:00Z'},
+                             {'event_id':'in-old','stay_id':'s-old','direction':'in','event_time':'2026-11-17T08:00:00Z'},
+                             {'event_id':'out-old','stay_id':'s-old','direction':'out','event_time':'2026-11-17T09:30:00Z'}])
+        self.assertEqual(gate.snapshot(self.db,'2026-11-17T10:00:00Z')['active'],1)
 
     def test_untrusted_sensor_does_not_count_free(self):
         self.good()

@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS gate_event (
   direction TEXT NOT NULL CHECK(direction IN ('in','out')),
   occurred_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS gate_baseline (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id),
+  occurred_at TEXT NOT NULL, count INTEGER NOT NULL CHECK(count>=0)
+);
 CREATE TABLE IF NOT EXISTS vehicle_stay (
   stay_id TEXT PRIMARY KEY, entered_at TEXT, exited_at TEXT, state TEXT NOT NULL,
   reason TEXT NOT NULL
