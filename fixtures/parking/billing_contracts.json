@@ -1,0 +1,8 @@
+[
+  {"event_id": "contract-exact-v1", "op": "contract", "contract_id": "CONTRACT-EXACT",
+   "contract_type": "exact", "valid_from": "2026-01-01T00:00:00Z", "valid_to": "2027-01-01T00:00:00Z",
+   "event_time": "2026-01-01T00:00:00Z"},
+  {"event_id": "contract-guaranteed-v1", "op": "contract", "contract_id": "CONTRACT-GUARANTEED",
+   "contract_type": "guaranteed", "valid_from": "2026-01-01T00:00:00Z", "valid_to": "2027-01-01T00:00:00Z",
+   "event_time": "2026-01-01T00:00:00Z"}
+]

@@ -1,0 +1,4 @@
+[
+  {"event_id": "cal-b-exact", "op": "gate_calibration", "gate_id": "GATE-B", "valid_from": "2026-11-20T00:00:00Z", "valid_to": "2026-11-21T00:00:00Z", "offset_seconds_min": 0, "offset_seconds_max": 0, "event_time": "2026-11-20T12:00:00Z"},
+  {"event_id": "cal-c-exact", "op": "gate_calibration", "gate_id": "GATE-C", "valid_from": "2026-11-20T00:00:00Z", "valid_to": "2026-11-21T00:00:00Z", "offset_seconds_min": 300, "offset_seconds_max": 300, "event_time": "2026-11-20T12:00:00Z"}
+]

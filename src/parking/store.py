@@ -78,6 +78,69 @@ CREATE TABLE IF NOT EXISTS capacity_incident (
 );
 """
 
+# Append-only offline parking fee adjudication ledger. Gate events and bills
+# are never rewritten: new calibration/tariff/contract evidence adds revisions
+# and later decisions supersede earlier ones through version links.
+BILLING_SCHEMA = """
+CREATE TABLE IF NOT EXISTS gate_calibration (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), gate_id TEXT NOT NULL,
+  valid_from TEXT NOT NULL, valid_to TEXT NOT NULL,
+  offset_seconds_min INTEGER NOT NULL, offset_seconds_max INTEGER NOT NULL,
+  published_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tariff_revision (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), tariff_id TEXT NOT NULL,
+  valid_from TEXT NOT NULL, valid_to TEXT NOT NULL,
+  grace_seconds INTEGER NOT NULL CHECK(grace_seconds>=0),
+  daily_cap_minor INTEGER NOT NULL CHECK(daily_cap_minor>=0),
+  tiers_json TEXT NOT NULL, published_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS contract_revision (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), contract_id TEXT NOT NULL,
+  contract_type TEXT NOT NULL CHECK(contract_type IN ('exact','guaranteed')),
+  valid_from TEXT NOT NULL, valid_to TEXT NOT NULL, published_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS billing_decision (
+  decision_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  stay_id TEXT NOT NULL, contract_id TEXT NOT NULL,
+  decision_seq INTEGER NOT NULL, status TEXT NOT NULL,
+  feasible_amounts_json TEXT NOT NULL, feasible_durations_json TEXT NOT NULL,
+  billed_minor INTEGER, guaranteed_minor INTEGER, reason TEXT NOT NULL,
+  entry_event TEXT, exit_event TEXT,
+  calibration_refs_json TEXT NOT NULL, tariff_refs_json TEXT NOT NULL,
+  contract_ref TEXT, evidence_fingerprint TEXT NOT NULL,
+  supersedes_decision INTEGER REFERENCES billing_decision(decision_id),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(stay_id,contract_id,decision_seq)
+);
+CREATE TABLE IF NOT EXISTS bill (
+  bill_id TEXT PRIMARY KEY, stay_id TEXT NOT NULL, contract_id TEXT NOT NULL,
+  bill_type TEXT NOT NULL CHECK(bill_type IN ('formal','prepayment','correction')),
+  amount_minor INTEGER NOT NULL CHECK(amount_minor>=0),
+  decision_id INTEGER NOT NULL REFERENCES billing_decision(decision_id),
+  supersedes_bill TEXT REFERENCES bill(bill_id),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS stay_ledger_entry (
+  entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  stay_id TEXT NOT NULL, contract_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK(kind IN ('prepayment','formal','supplement','refund')),
+  amount_minor INTEGER NOT NULL,
+  bill_id TEXT REFERENCES bill(bill_id),
+  decision_id INTEGER NOT NULL REFERENCES billing_decision(decision_id),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_ledger_stay ON stay_ledger_entry(stay_id,contract_id);
+CREATE INDEX IF NOT EXISTS idx_bill_stay ON bill(stay_id,contract_id);
+"""
+
+# Columns added to the original gate ledger without rewriting any row.
+MIGRATIONS = [
+    "ALTER TABLE gate_event ADD COLUMN gate_id TEXT",
+    "ALTER TABLE vehicle_stay ADD COLUMN entry_gate TEXT",
+    "ALTER TABLE vehicle_stay ADD COLUMN exit_gate TEXT",
+]
+
 
 def connect(path: str | Path) -> sqlite3.Connection:
     path = Path(path)
@@ -85,6 +148,16 @@ def connect(path: str | Path) -> sqlite3.Connection:
     db = sqlite3.connect(path)
     db.row_factory = sqlite3.Row
     db.executescript(SCHEMA)
+    user_version = db.execute('PRAGMA user_version').fetchone()[0]
+    for index, statement in enumerate(MIGRATIONS):
+        if user_version <= index:
+            try:
+                db.execute(statement)
+            except sqlite3.OperationalError as exc:  # column already exists
+                if 'duplicate column name' not in str(exc):
+                    raise
+            db.execute(f'PRAGMA user_version={index + 1}')
+    db.executescript(BILLING_SCHEMA)
     return db
 
 

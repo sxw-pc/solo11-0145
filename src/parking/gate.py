@@ -17,7 +17,7 @@ def ingest(db,events: list[dict]) -> dict:
             else:
                 if e['direction'] not in ('in','out'):raise ValueError('gate direction must be in/out')
                 if record(db,e,'gate',e['stay_id']):
-                    db.execute('INSERT INTO gate_event VALUES (?,?,?,?)',(e['event_id'],e['stay_id'],e['direction'],e['event_time']))
+                    db.execute('INSERT INTO gate_event VALUES (?,?,?,?,?)',(e['event_id'],e['stay_id'],e['direction'],e['event_time'],e.get('gate_id')))
                     made+=1
         reconcile(db)
     return {'imported':made,'stays':len(rows(db,'SELECT stay_id FROM vehicle_stay'))}
@@ -35,13 +35,15 @@ def reconcile(db):
         if len(ins)>1 or len(outs)>1:duplicates+=max(0,len(ins)-1)+max(0,len(outs)-1)
         first_in=ins[0]['occurred_at'] if ins else None
         first_out=outs[0]['occurred_at'] if outs else None
+        entry_gate=ins[0]['gate_id'] if ins else None
+        exit_gate=outs[0]['gate_id'] if outs else None
         if not first_in or (first_out and first_out<first_in):
             state='orphan';reason='out_without_prior_in' if first_out else 'missing_in';orphans+=1
         elif first_out:
             state='closed';reason='paired'
         else:
             state='active';reason='entry_without_exit';active+=1
-        db.execute('INSERT INTO vehicle_stay VALUES (?,?,?,?,?)',(stay_id,first_in,first_out,state,reason))
+        db.execute('INSERT INTO vehicle_stay VALUES (?,?,?,?,?,?,?)',(stay_id,first_in,first_out,state,reason,entry_gate,exit_gate))
     db.execute("INSERT INTO gate_balance VALUES (1,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET active_count=excluded.active_count,orphan_count=excluded.orphan_count,duplicate_count=excluded.duplicate_count,computed_at=excluded.computed_at",(active,orphans,duplicates))
 
 
@@ -56,7 +58,8 @@ def snapshot(db,as_of: str) -> dict:
         duplicate+=max(0,len(ins)-1)+max(0,len(outs)-1)
         if not ins or (outs and outs[0]['occurred_at']<ins[0]['occurred_at']):orphan+=1;continue
         if not outs:active+=1
-        else:billable.append({'stay_id':stay_id,'from':ins[0]['occurred_at'],'to':outs[0]['occurred_at']})
+        else:billable.append({'stay_id':stay_id,'from':ins[0]['occurred_at'],'to':outs[0]['occurred_at'],
+                              'entry_gate':ins[0]['gate_id'],'exit_gate':outs[0]['gate_id']})
         if baseline:
             if ins[0]['occurred_at']>baseline['occurred_at']:delta+=1
             if outs and outs[0]['occurred_at']>baseline['occurred_at']:delta-=1

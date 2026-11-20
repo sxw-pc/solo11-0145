@@ -1,0 +1,7 @@
+[
+  {"event_id": "tariff-standard-v1", "op": "tariff", "tariff_id": "STANDARD",
+   "valid_from": "2026-01-01T00:00:00Z", "valid_to": "2027-01-01T00:00:00Z",
+   "grace_seconds": 0, "daily_cap_minor": 500,
+   "tiers": [[3600, 200], [7200, 400], [null, 800]],
+   "event_time": "2026-01-01T00:00:00Z"}
+]
