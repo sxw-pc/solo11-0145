@@ -1,0 +1,5 @@
+[
+  {"event_id":"ceq-ga","op":"equipment","gun_id":"gA","bays":["A"],"charging":[{"type":"dc","power_kw":7}],"circuit_id":"L1","circuit_rating_kw":7,"event_time":"2026-11-17T09:00:00Z"},
+  {"event_id":"ceq-gb","op":"equipment","gun_id":"gB","bays":["B"],"charging":[{"type":"dc","power_kw":7}],"circuit_id":"L1","circuit_rating_kw":7,"event_time":"2026-11-17T09:00:00Z"},
+  {"event_id":"ceq-gc","op":"equipment","gun_id":"gC","bays":["C"],"charging":[{"type":"dc","power_kw":7}],"circuit_id":"L1","circuit_rating_kw":7,"event_time":"2026-11-17T09:00:00Z"}
+]

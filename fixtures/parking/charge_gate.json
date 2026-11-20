@@ -1,0 +1,4 @@
+[
+  {"event_id":"cgate-base","op":"baseline","count":0,"event_time":"2026-11-17T09:00:00Z"},
+  {"event_id":"cgate-in-1","stay_id":"cs1","direction":"in","event_time":"2026-11-17T09:50:00Z"}
+]

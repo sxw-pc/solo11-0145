@@ -76,6 +76,34 @@ CREATE TABLE IF NOT EXISTS capacity_incident (
   decision TEXT NOT NULL,reason TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS charger_revision (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), gun_id TEXT NOT NULL,
+  bays_json TEXT NOT NULL, charging_json TEXT NOT NULL,
+  circuit_id TEXT NOT NULL, circuit_rating_kw REAL NOT NULL,
+  valid_from TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS charger_registry (
+  gun_id TEXT PRIMARY KEY, bays_json TEXT NOT NULL, charging_json TEXT NOT NULL,
+  circuit_id TEXT NOT NULL, circuit_rating_kw REAL NOT NULL,
+  valid_from TEXT NOT NULL, source_event TEXT NOT NULL REFERENCES evidence(event_id)
+);
+CREATE TABLE IF NOT EXISTS charger_fault (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), gun_id TEXT NOT NULL,
+  state TEXT NOT NULL CHECK(state IN ('fault','recovery')),
+  source TEXT NOT NULL, occurred_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS charge_session (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id), session_id TEXT NOT NULL,
+  bay_id TEXT NOT NULL, gun_id TEXT NOT NULL, charging_type TEXT NOT NULL,
+  power_kw REAL NOT NULL CHECK(power_kw>0), started_at TEXT NOT NULL, ended_at TEXT,
+  event_time TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS charging_release (
+  release_id INTEGER PRIMARY KEY AUTOINCREMENT, as_of TEXT NOT NULL,
+  contract TEXT NOT NULL, charging_type TEXT NOT NULL, min_power_kw REAL NOT NULL,
+  state TEXT NOT NULL, reason TEXT NOT NULL, published TEXT, evidence TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 
