@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from . import sensor,gate,capacity
+from . import sensor,gate,capacity,verify
 from .store import rows
 
 
@@ -37,7 +37,8 @@ def decide(db,as_of: str,total_bays: int,timeout_minutes: int=30,save: bool=True
         state='published';available=max(0,usable-max(s['occupied'],g['active']));reason='reconciled'
     result={'as_of':as_of,'total_bays':total_bays,'usable_bays':usable,'available':available,'state':state,'reason':reason,
             'capacity_breach':capacity_breach,
-            'sensor':s,'gate':g,'capacity':c,'discrepancy':discrepancy}
+            'sensor':s,'gate':g,'capacity':c,'discrepancy':discrepancy,
+            'binding':verify.status(db,as_of)}
     if save:
         with db:
             if capacity_breach:

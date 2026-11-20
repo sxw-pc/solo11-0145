@@ -130,11 +130,18 @@ class ParkingCases(unittest.TestCase):
         incident=self.db.execute('SELECT active_lower_bound,operable_capacity,decision FROM capacity_incident ORDER BY incident_id DESC LIMIT 1').fetchone()
         self.assertEqual(tuple(incident),(2,1,'operator_investigation'))
 
-    def test_untrusted_sensor_does_not_count_free(self):
+    def test_unregistered_device_reading_is_not_projected(self):
         self.good()
+        before=sensor.snapshot(self.db,'2026-11-17T10:10:00Z')
         e={'event_id':'read-bad','op':'reading','device_id':'missing','bay_id':'b2','occupied':False,'sequence_no':9,'event_time':'2026-11-17T10:05:00Z'}
         sensor.ingest(self.db,[e])
-        self.assertEqual(sensor.snapshot(self.db,'2026-11-17T10:10:00Z')['states']['b2']['state'],'unknown')
+        after=sensor.snapshot(self.db,'2026-11-17T10:10:00Z')
+        # Readings are projected by device identity, so a device with no
+        # binding cannot claim a bay; its raw event is kept as evidence only.
+        self.assertEqual(after['states']['b2']['state'],'free')
+        self.assertEqual(after['states']['b2']['event_id'],'read-2')
+        self.assertEqual((after['free'],after['occupied']),(before['free'],before['occupied']))
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM occupancy_event WHERE event_id='read-bad'").fetchone()[0],1)
 
 
 if __name__=='__main__':unittest.main()

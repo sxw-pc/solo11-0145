@@ -76,6 +76,29 @@ CREATE TABLE IF NOT EXISTS capacity_incident (
   decision TEXT NOT NULL,reason TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS device_fault (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id),
+  device_id TEXT NOT NULL, faulty INTEGER NOT NULL CHECK(faulty IN (0,1)),
+  event_time TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS field_trial (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id),
+  trial_id TEXT NOT NULL, window_start TEXT NOT NULL, window_end TEXT NOT NULL,
+  executor TEXT NOT NULL, witness TEXT NOT NULL,
+  confirmed_json TEXT NOT NULL, readings_json TEXT NOT NULL,
+  event_time TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS handover_certificate (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id),
+  certificate_id TEXT NOT NULL, issuer TEXT NOT NULL,
+  bindings_json TEXT NOT NULL, event_time TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS binding_issuance (
+  issuance_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  contract TEXT NOT NULL, bays_json TEXT NOT NULL, mapping_json TEXT NOT NULL,
+  verdict TEXT NOT NULL, reason TEXT NOT NULL, effective_from TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 

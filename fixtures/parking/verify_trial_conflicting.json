@@ -1,0 +1,9 @@
+[
+  {"event_id":"trial-3","op":"trial","trial_id":"t3",
+   "window_start":"2026-11-17T11:55:00Z","window_end":"2026-11-17T12:05:00Z",
+   "executor":"erin","witness":"frank",
+   "confirmed":{"A":"occupied","B":"free"},
+   "readings":[{"device_id":"d1","sequence_no":3,"occupied":true,"observed_at":"2026-11-17T12:00:00Z"},
+               {"device_id":"d2","sequence_no":3,"occupied":false,"observed_at":"2026-11-17T12:00:00Z"}],
+   "event_time":"2026-11-17T12:06:00Z"}
+]

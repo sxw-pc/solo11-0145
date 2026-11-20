@@ -1,0 +1,5 @@
+[
+  {"event_id":"handover-1","op":"handover","certificate_id":"cert-1",
+   "issuer":"installer-co","bindings":{"d1":"B","d2":"A"},
+   "event_time":"2026-11-17T09:30:00Z"}
+]
