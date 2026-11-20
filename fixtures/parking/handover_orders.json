@@ -1,0 +1,5 @@
+[
+  {"event_id":"ho-cap-c","order_id":"C","purpose":"construction","priority":1,"approved":true,"revoked":false,"bays":["A"],"starts_at":"2026-11-20T09:00:00Z","ends_at":"2026-11-20T18:00:00Z","event_time":"2026-11-20T08:30:00Z"},
+  {"event_id":"ho-cap-f","order_id":"F","purpose":"fire","priority":10,"approved":true,"revoked":false,"bays":["A"],"starts_at":"2026-11-20T12:00:00Z","ends_at":"2026-11-20T14:00:00Z","event_time":"2026-11-20T11:30:00Z"},
+  {"event_id":"ho-cap-g","order_id":"G","purpose":"fire","priority":10,"approved":true,"revoked":false,"bays":["A"],"starts_at":"2026-11-20T13:00:00Z","ends_at":"2026-11-20T15:00:00Z","event_time":"2026-11-20T12:30:00Z"}
+]

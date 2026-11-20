@@ -1,0 +1,17 @@
+[
+  {
+    "event_id": "ho-paper-override-f",
+    "doc_type": "emergency_override",
+    "bay_id": "A",
+    "from_order_id": "C",
+    "from_order_version": "ho-cap-c",
+    "to_order_id": "F",
+    "to_order_version": "ho-cap-f",
+    "override_version": "EO-F-0001",
+    "from_party": "construction-crew-A",
+    "to_party": "fire-watch-A",
+    "from_signature": "duty-commander-seal",
+    "to_signature": "fire-incident-commander-seal",
+    "event_time": "2026-11-20T12:03:00Z"
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "event_id": "ho-paper-return-release-f",
+    "doc_type": "release",
+    "bay_id": "A",
+    "from_order_id": "F",
+    "from_order_version": "ho-cap-f",
+    "to_order_id": "C",
+    "to_order_version": "ho-cap-c",
+    "from_party": "fire-watch-A",
+    "to_party": "construction-crew-A",
+    "from_signature": "fire-incident-commander-seal",
+    "to_signature": "crew-leader-seal",
+    "event_time": "2026-11-20T15:20:00Z"
+  },
+  {
+    "event_id": "ho-paper-return-takeover-c",
+    "doc_type": "takeover",
+    "bay_id": "A",
+    "from_order_id": "F",
+    "from_order_version": "ho-cap-f",
+    "to_order_id": "C",
+    "to_order_version": "ho-cap-c",
+    "from_party": "fire-watch-A",
+    "to_party": "construction-crew-A",
+    "from_signature": "fire-incident-commander-seal",
+    "to_signature": "crew-leader-seal",
+    "event_time": "2026-11-20T15:25:00Z"
+  }
+]

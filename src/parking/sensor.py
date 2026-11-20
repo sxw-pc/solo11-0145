@@ -49,6 +49,25 @@ def bay_state(db,bay_id: str,as_of: str,timeout_minutes: int=30) -> dict:
     return {'state':'occupied' if e['occupied'] else 'free','event_id':e['event_id'],'observed_at':e['observed_at'],'reason':'trusted_reading'}
 
 
+def bay_clearance(db,bay_id: str,as_of: str,timeout_minutes: int=30) -> dict:
+    """Trusted physical-clearance verdict for one bay.
+
+    Only a trusted, in-calibration, fresh reading may prove a bay is free.
+    A trusted occupied reading means paper handover cannot make the bay
+    physically vacant; anything unknown stays under investigation. The gate
+    aggregate is deliberately never consulted for a single-bay clearance.
+    """
+    st=bay_state(db,bay_id,as_of,timeout_minutes)
+    if st['state']=='free':
+        return {'clearance':'clear','state':'free','event_id':st['event_id'],
+                'observed_at':st['observed_at'],'reason':st['reason']}
+    if st['state']=='occupied':
+        return {'clearance':'occupied','state':'occupied','event_id':st['event_id'],
+                'observed_at':st['observed_at'],'reason':st['reason']}
+    return {'clearance':'unknown','state':'unknown','event_id':st['event_id'],
+            'observed_at':st['observed_at'],'reason':st['reason']}
+
+
 def snapshot(db,as_of: str,timeout_minutes: int=30) -> dict:
     bays={r['bay_id'] for r in rows(db,'SELECT bay_id FROM sensor_registry')}
     bays.update(r['bay_id'] for r in rows(db,'SELECT DISTINCT bay_id FROM occupancy_event'))

@@ -1,0 +1,8 @@
+[
+  {"event_id":"ho-dev-a","op":"device","device_id":"dA","bay_id":"A","calibrated_until":"2026-11-20T20:00:00Z","event_time":"2026-11-20T08:00:00Z"},
+  {"event_id":"ho-read-a-free-1205","op":"reading","device_id":"dA","bay_id":"A","occupied":false,"sequence_no":1,"event_time":"2026-11-20T12:05:00Z"},
+  {"event_id":"ho-read-a-occ-1206","op":"reading","device_id":"dA","bay_id":"A","occupied":true,"sequence_no":2,"event_time":"2026-11-20T12:06:00Z"},
+  {"event_id":"ho-read-a-free-1240","op":"reading","device_id":"dA","bay_id":"A","occupied":false,"sequence_no":3,"event_time":"2026-11-20T12:40:00Z"},
+  {"event_id":"ho-read-a-free-1420","op":"reading","device_id":"dA","bay_id":"A","occupied":false,"sequence_no":4,"event_time":"2026-11-20T14:20:00Z"},
+  {"event_id":"ho-read-a-free-1510","op":"reading","device_id":"dA","bay_id":"A","occupied":false,"sequence_no":5,"event_time":"2026-11-20T15:10:00Z"}
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "event_id": "ho-paper-c-belated-release",
+    "doc_type": "release",
+    "bay_id": "A",
+    "from_order_id": "C",
+    "from_order_version": "ho-cap-c",
+    "to_order_id": "F",
+    "to_order_version": "ho-cap-f",
+    "from_party": "construction-crew-A",
+    "to_party": "fire-watch-A",
+    "from_signature": "crew-leader-seal",
+    "to_signature": "fire-incident-commander-seal",
+    "event_time": "2026-11-20T15:40:00Z"
+  }
+]

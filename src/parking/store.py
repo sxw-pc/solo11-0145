@@ -65,6 +65,39 @@ CREATE TABLE IF NOT EXISTS capacity_revision (
   bays_json TEXT NOT NULL, starts_at TEXT NOT NULL, ends_at TEXT NOT NULL,
   event_time TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS handover_document (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id),
+  doc_type TEXT NOT NULL CHECK(doc_type IN ('release','takeover','revocation','emergency_override')),
+  bay_id TEXT NOT NULL, from_order_id TEXT, to_order_id TEXT,
+  from_party TEXT NOT NULL, to_party TEXT NOT NULL,
+  from_signature TEXT NOT NULL, to_signature TEXT NOT NULL,
+  from_order_version TEXT, to_order_version TEXT, override_version TEXT,
+  revokes_event_id TEXT, doc_time TEXT NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('valid','revoked'))
+);
+CREATE TABLE IF NOT EXISTS handover_revision (
+  event_id TEXT PRIMARY KEY REFERENCES evidence(event_id),
+  doc_type TEXT NOT NULL, bay_id TEXT NOT NULL,
+  from_order_id TEXT, to_order_id TEXT,
+  from_party TEXT NOT NULL, to_party TEXT NOT NULL,
+  from_signature TEXT NOT NULL, to_signature TEXT NOT NULL,
+  from_order_version TEXT, to_order_version TEXT, override_version TEXT,
+  revokes_event_id TEXT, doc_time TEXT NOT NULL, status TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS handover_decision_revision (
+  decision_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  as_of TEXT NOT NULL, bay_id TEXT NOT NULL, order_id TEXT NOT NULL,
+  contract TEXT NOT NULL CHECK(contract IN ('standard','emergency')),
+  status TEXT NOT NULL, reason TEXT NOT NULL,
+  evidence_json TEXT NOT NULL,
+  decided_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS emergency_obligation (
+  as_of TEXT NOT NULL, bay_id TEXT NOT NULL, displaced_order_id TEXT NOT NULL,
+  override_event_id TEXT NOT NULL, fire_order_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(as_of,bay_id,displaced_order_id,override_event_id)
+);
 CREATE TABLE IF NOT EXISTS availability_release (
   release_id INTEGER PRIMARY KEY AUTOINCREMENT, as_of TEXT NOT NULL,
   available INTEGER, state TEXT NOT NULL, evidence TEXT NOT NULL,

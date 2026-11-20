@@ -37,6 +37,22 @@ python -m parking report --db data/demo.sqlite --as-of 2026-11-17T10:10:00Z --to
 
 `gate_capacity_breach.json` 与 `capacity_breach.json` 组成独立反例：仅导入前者时，孤立出场与地磁缺口令余位 `unknown`；再导入后者，临占把可用容量降到 1，而闸机已确认至少 2 辆在场，结论变为需运营方调查的 `capacity_breach`，并持久化超容事件。
 
+## 现场交接许可（双合同裁决）
+
+临占订单在同一车位时间窗重叠时，`snapshot` 仍按泊位并集只扣一次公共容量、按 priority 给 `owner_by_bay`；但排序结果不是交接证据。`handover_snapshot` 另对每个（订单，车位）按查询时刻重裁现场入场状态：`admittable`（可入场）、`awaiting_handover`（待交接）、`under_investigation`（地磁待查）、`preempted`（被高优先级压过）、`conflict`（同优先级无交接凭证冲突）。
+
+```powershell
+python -m parking import-handover --db data/demo.sqlite --input fixtures/parking/handover_override.json
+python -m parking handover --db data/demo.sqlite --as-of 2026-11-20T12:05:00Z
+```
+
+- 每份交接文书（`release` 交还、`takeover` 接管、`revocation` 撤销、`emergency_override` 紧急越级）都绑定唯一车位、前后订单 ID、订单来源版本/越级版本、时刻、两方身份与两方签字。车位不符或引用旧版订单的签字在裁决时被拒绝并列入 `rejected_documents`；越级版本重放到别的（车位，消防订单）对在导入时直接拒绝。
+- 普通交接合同：前使用方交还 + 后使用方接管 + 车位可信空闲，才签 `admittable`。应急越级合同：高优先级消防订单有效、独立越级文书已签且车位可信空闲时，可不等原使用方签交还即准入，同时把被压订单未完成的交还责任记入 `emergency_obligation` 台账，直至该订单自己补签交还才销账。
+- 两合同都不准占用中或证据未知的车位实际入场；未知地磁只给 `under_investigation`，不看闸机总数推断单车位腾空。同一份消防订单加越级文书下，普通合同仍 `awaiting_handover`、应急合同可 `admittable`，差异在每条 claim 的两个合同字段中可见。
+- 低优先级订单被压期间为 `preempted`；高优先级订单结束不自动恢复旧方——旧订单仍须在有效窗口内且具备新一轮交还/接管证据。同优先级冲突至少两方且无交接链才成立，绝不按 `order_id` 字典序选胜者；订单撤销、新高优先级订单迟到、文书撤销与重放均按事件时刻从只追加版次重裁，历史签收与裁决版次保留在 `handover_revision`、`handover_decision_revision`。
+
+`handover_orders.json`、`handover_sensor.json`、`handover_override.json`、`handover_return.json`、`handover_discharge.json` 组成可运行反例（A 车位施工单 C 09:00–18:00 priority 1，消防单 F 12:00–14:00 priority 10，同优先级 G 13:00–15:00）：12:05 地磁空闲且有越级文书时普通合同待交接、应急合同可入场；12:06 地磁占用时两合同均不放行；13:05 F/G 同报冲突；F、G 结束后 C 无新文书只能等待，迟到的交还/接管齐备后才恢复；C 的越级交还责任只在其本人补签后销账。
+
 ## 可复现反例
 
 在正常演示基础上，分别导入 `sensor_late.json`、`gate_orphan.json`、`capacity_overlap.json`。第一项不改变新占用状态；第二项冻结发布；第三项仍只扣一个泊位，但消防许可取得该泊位处置优先级。测试另覆盖失效设备、心跳超时、临占撤销、跨夜计费区间、批次回滚和两账同时不完整。
