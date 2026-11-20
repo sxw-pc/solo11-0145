@@ -1,0 +1,4 @@
+[
+  {"event_id":"freq-G","device_id":"G","frequency":0.8,"source":"maintenance-history-2025","captured_at":"2025-12-01T00:00:00Z","event_time":"2025-12-01T00:00:00Z"},
+  {"event_id":"freq-K","device_id":"K","frequency":0.2,"source":"maintenance-history-2025","captured_at":"2025-12-01T00:00:00Z","event_time":"2025-12-01T00:00:00Z"}
+]

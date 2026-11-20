@@ -1,11 +1,12 @@
 """Gate stay reconciliation and billable intervals."""
 from __future__ import annotations
 
-from .sources import record
+from .sources import reject_conflicts, record
 from .store import rows
 
 
 def ingest(db,events: list[dict]) -> dict:
+    reject_conflicts(db,events)
     made=0
     with db:
         for e in events:

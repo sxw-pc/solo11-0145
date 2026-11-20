@@ -1,0 +1,8 @@
+[
+  {"event_id":"m-dev-A","op":"device","device_id":"A","bay_id":"bA","calibrated_until":"2026-11-17T11:00:00Z","event_time":"2026-11-17T08:00:00Z"},
+  {"event_id":"m-dev-B","op":"device","device_id":"B","bay_id":"bB","calibrated_until":"2026-11-17T11:00:00Z","event_time":"2026-11-17T08:00:00Z"},
+  {"event_id":"m-dev-C","op":"device","device_id":"C","bay_id":"bC","calibrated_until":"2026-11-17T11:00:00Z","event_time":"2026-11-17T08:00:00Z"},
+  {"event_id":"m-read-A","op":"reading","device_id":"A","bay_id":"bA","occupied":true,"sequence_no":1,"event_time":"2026-11-17T09:55:00Z"},
+  {"event_id":"m-read-B","op":"reading","device_id":"B","bay_id":"bB","occupied":false,"sequence_no":1,"event_time":"2026-11-17T09:55:00Z"},
+  {"event_id":"m-read-C","op":"reading","device_id":"C","bay_id":"bC","occupied":false,"sequence_no":1,"event_time":"2026-11-17T09:55:00Z"}
+]

@@ -1,0 +1,4 @@
+[
+  {"event_id":"m-dev-D","op":"device","device_id":"D","bay_id":"bD","calibrated_until":"2026-11-17T11:00:00Z","event_time":"2026-11-17T08:00:00Z"},
+  {"event_id":"m-read-D","op":"reading","device_id":"D","bay_id":"bD","occupied":false,"sequence_no":1,"event_time":"2026-11-17T10:05:00Z"}
+]

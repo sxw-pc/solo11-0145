@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from .sources import record
+from .sources import reject_conflicts, record
 from .store import rows
 
 
 def ingest(db, events: list[dict]) -> dict:
+    reject_conflicts(db, events)
     made = 0
     with db:
         for e in events:
@@ -49,8 +50,33 @@ def bay_state(db,bay_id: str,as_of: str,timeout_minutes: int=30) -> dict:
     return {'state':'occupied' if e['occupied'] else 'free','event_id':e['event_id'],'observed_at':e['observed_at'],'reason':'trusted_reading'}
 
 
-def snapshot(db,as_of: str,timeout_minutes: int=30) -> dict:
+def snapshot(db,as_of: str,timeout_minutes: int=30,diagnostic_causes: dict | None = None) -> dict:
     bays={r['bay_id'] for r in rows(db,'SELECT bay_id FROM sensor_registry')}
     bays.update(r['bay_id'] for r in rows(db,'SELECT DISTINCT bay_id FROM occupancy_event'))
     states={bay:bay_state(db,bay,as_of,timeout_minutes) for bay in sorted(bays)}
+    # A maintenance diagnosis may explain *why* a bay is unknown (for example an
+    # upstream power fault).  It annotates the cause only; state stays unknown
+    # and is never turned into free until field repair provides a real reading.
+    if diagnostic_causes:
+        for bay,state in states.items():
+            if state['state']=='unknown' and bay in diagnostic_causes:
+                state['diagnostic_cause']=diagnostic_causes[bay]
     return {'states':states,'free':sum(v['state']=='free' for v in states.values()),'occupied':sum(v['state']=='occupied' for v in states.values()),'unknown':sum(v['state']=='unknown' for v in states.values())}
+
+
+def heartbeat_losses(db,as_of: str,timeout_minutes: int=30) -> list[dict]:
+    """Bays whose heartbeat deadline has passed, with the last trusted reading.
+
+    This is the symptom set the maintenance diagnosis tries to explain; it does
+    not itself claim a device has failed.
+    """
+    lost=[]
+    state_map=snapshot(db,as_of,timeout_minutes)['states']
+    for bay,state in sorted(state_map.items()):
+        if state['state']=='unknown' and state['reason'] in ('heartbeat_timeout','untrusted_device'):
+            last=db.execute('SELECT o.device_id,o.observed_at FROM occupancy_event o WHERE o.bay_id=? AND o.observed_at<=? ORDER BY o.observed_at DESC,o.sequence_no DESC,o.event_id DESC LIMIT 1',
+                            (bay,as_of)).fetchone()
+            lost.append({'bay_id':bay,'state_reason':state['reason'],
+                         'device_id':last['device_id'] if last else None,
+                         'last_observed_at':last['observed_at'] if last else None})
+    return lost

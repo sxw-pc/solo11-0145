@@ -6,9 +6,21 @@ from . import sensor,gate,capacity
 from .store import rows
 
 
-def decide(db,as_of: str,total_bays: int,timeout_minutes: int=30,save: bool=True) -> dict:
+def decide(db,as_of: str,total_bays: int,timeout_minutes: int=30,save: bool=True,
+           diagnose_dispatch: bool=False,max_faults: int=2,vehicle_capacity: int=3,
+           risk_threshold: float=0.75) -> dict:
     if total_bays<0:raise ValueError('total_bays cannot be negative')
-    s=sensor.snapshot(db,as_of,timeout_minutes)
+    diagnosis=None
+    if diagnose_dispatch:
+        # Imported lazily so availability reporting stays usable without the
+        # maintenance topology; a missing topology is an input error, not a
+        # reason to silently drop the diagnosis attachment.
+        from . import maintenance
+        diagnosis=maintenance.diagnose(db,as_of,timeout_minutes=timeout_minutes,max_faults=max_faults,
+                                       vehicle_capacity=vehicle_capacity,risk_threshold=risk_threshold,save=save)
+    s=sensor.snapshot(db,as_of,timeout_minutes,
+                      diagnostic_causes={bay:{"reason":c["reason"],"nodes":c["nodes"],"device_id":c["device_id"]}
+                                         for bay,c in (diagnosis['bay_causes'].items() if diagnosis else [])})
     g=gate.snapshot(db,as_of)
     c=capacity.snapshot(db,as_of)
     uncovered=max(0,total_bays-len(s['states']))
@@ -38,6 +50,21 @@ def decide(db,as_of: str,total_bays: int,timeout_minutes: int=30,save: bool=True
     result={'as_of':as_of,'total_bays':total_bays,'usable_bays':usable,'available':available,'state':state,'reason':reason,
             'capacity_breach':capacity_breach,
             'sensor':s,'gate':g,'capacity':c,'discrepancy':discrepancy}
+    if diagnosis is not None:
+        # Diagnosis is an attachment: it explains causes and dispatch, but the
+        # conservative availability state and the unknown bays are unchanged.
+        result['diagnosis']={'topology_event':diagnosis['topology_event'],
+                             'explanation_count':diagnosis['explanation_count'],
+                             'explanations':diagnosis.get('explanations',[]),
+                             'eliminated':diagnosis['eliminated'],
+                             'explanation_limit_reached':diagnosis['explanation_limit_reached'],
+                             'confirmed_nodes':diagnosis['confirmed_nodes'],
+                             'bay_causes':diagnosis['bay_causes'],
+                             'guaranteed_repair':diagnosis['guaranteed_repair'],
+                             'risk_budget':diagnosis['risk_budget'],
+                             'frequency_complete':diagnosis['frequency_complete'],
+                             'contracts_disagree':diagnosis['contracts_disagree'],
+                             'revision':diagnosis.get('revision')}
     if save:
         with db:
             if capacity_breach:

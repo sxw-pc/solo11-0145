@@ -1,0 +1,16 @@
+[
+  {"event_id":"topo-power","op":"topology","event_time":"2026-11-17T08:00:00Z","nodes":[
+    {"node_id":"A","kind":"sensor","spare_sku":"SKU-SENSOR"},
+    {"node_id":"B","kind":"sensor","spare_sku":"SKU-SENSOR"},
+    {"node_id":"C","kind":"sensor","spare_sku":"SKU-SENSOR"},
+    {"node_id":"K","kind":"controller","spare_sku":"SKU-CTRL-K"},
+    {"node_id":"G","kind":"gateway","spare_sku":"SKU-GATEWAY"},
+    {"node_id":"P","kind":"power","spare_sku":"SKU-PSU"}
+  ],"edges":[
+    {"child_id":"A","parent_id":"K"},
+    {"child_id":"B","parent_id":"K"},
+    {"child_id":"C","parent_id":"K"},
+    {"child_id":"K","parent_id":"G"},
+    {"child_id":"K","parent_id":"P"}
+  ]}
+]

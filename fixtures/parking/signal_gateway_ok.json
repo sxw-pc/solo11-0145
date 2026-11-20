@@ -1,0 +1,4 @@
+[
+  {"event_id":"sig-gateway-ok","device_id":"G","signal_kind":"self_test","result":"ok","event_time":"2026-11-17T10:06:00Z","captured_at":"2026-11-17T10:09:00Z","source":"gateway-loopback","reliability":"high","detail":{"forwards_other_controller":true}},
+  {"event_id":"sig-k-no-output","device_id":"K","signal_kind":"self_test","result":"fail","event_time":"2026-11-17T10:06:00Z","captured_at":"2026-11-17T10:09:00Z","source":"controller-probe","reliability":"high","detail":{"output":"none"}}
+]

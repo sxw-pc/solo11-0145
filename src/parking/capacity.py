@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import json
-from .sources import record
+from .sources import reject_conflicts, record
 from .store import rows
 
 PURPOSES={'construction','fire','accessible'}
 
 
 def ingest(db,events: list[dict]) -> dict:
+    reject_conflicts(db,events)
     made=0
     with db:
         for e in events:
