@@ -1,0 +1,6 @@
+[
+  {"event_id":"acc-gate-s1-in","stay_id":"S1","direction":"in","event_time":"2026-11-20T09:55:00Z"},
+  {"event_id":"acc-gate-s2-in","stay_id":"S2","direction":"in","event_time":"2026-11-20T09:56:00Z"},
+  {"event_id":"acc-gate-s1-out","stay_id":"S1","direction":"out","event_time":"2026-11-20T11:05:00Z"},
+  {"event_id":"acc-gate-s2-out","stay_id":"S2","direction":"out","event_time":"2026-11-20T11:06:00Z"}
+]

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from . import sensor,gate,capacity
+from . import sensor,gate,capacity,accessible
 from .store import rows
 
 
@@ -50,3 +50,28 @@ def decide(db,as_of: str,total_bays: int,timeout_minutes: int=30,save: bool=True
 
 def history(db) -> list[dict]:
     return rows(db,'SELECT release_id,as_of,available,state,evidence FROM availability_release ORDER BY release_id')
+
+
+def accessible_view(db,as_of: str,timeout_minutes: int=30,save: bool=False,scope: dict|None=None) -> dict:
+    """Audit view for operators: verdict, feasible attributions, contracts.
+
+    This never changes ordinary availability or billing.  ``save=False`` keeps
+    a read-only report from adding an audit version unless the caller asked.
+    """
+    result=accessible.audit(db,as_of,timeout_minutes,save=save,scope=scope)
+    return {'as_of':result['as_of'],'accessible_bays':result['accessible_bays'],
+            'scope':result['scope'],'as_of_version':result['audit_version'],
+            'occupancy':[{'bay_id':p['bay_id'],'from':p['from'],'to':p['to'],
+                          'verdict':p['verdict'],'reason':p['reason'],
+                          'candidates':p['candidates'],
+                          'always_unlicensed_stay':p['always_unlicensed_stay'],
+                          'must_patrol':p.get('must_patrol',False),
+                          'attributions':p['attributions'],'notes':p['notes']}
+                         for p in result['occupancy']],
+            'contracts':result['contracts'],'reasons':result['reasons'],
+            'unknown_readings':result['unknown_readings'],
+            'untrusted_periods':result.get('untrusted_periods',[]),
+            'assignment_count':result['assignment_count'],
+            'assignment_truncated':result['assignment_truncated'],
+            'evidence_refs':result['evidence_refs'],
+            'scope_notices':result['scope_notices']}
